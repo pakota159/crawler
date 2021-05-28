@@ -23,3 +23,10 @@ Hiện tại, có 2 dữ liệu đã kéo về:
 1. Simple words: đang lấy ở kaggle, hơn 300000 từ phổ biến (cùng với tần suất xuất hiện của các từ). https://www.kaggle.com/rtatman/english-word-frequency
 
 2. **raw_data.csv**: dữ liệu thô mà mình cần xử lý
+
+API nghĩa tiếng Anh của từ
+Thư viện xử lý mapping dạng từ predict, predictive, prediction,...
+Loại trừ S, ED (thủ công, không cần care những từ ít)
+Loại trừ cannot, doesnt
+Công thức để tính freq * title (title trọng số hơn)
+Thêm stopwords riêng để thêm từ mình tự tìm được.
