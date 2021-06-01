@@ -21,7 +21,7 @@ class BlogSpider(scrapy.Spider):
         # urls we want to crawl
         urls = []
 
-        with open('links.txt', mode='r') as links:
+        with open('./data_cleaning/links.txt', mode='r') as links:
             lines = links.readlines()
             for line in lines:
                 urls.append(line.strip())
@@ -55,12 +55,12 @@ class BlogSpider(scrapy.Spider):
             return text.strip()
     
     def init_file(self):
-        with open('raw_data.csv', mode='w') as raw_data:
+        with open('./data_cleaning/raw_data.csv', mode='w') as raw_data:
             writer = csv.writer(raw_data, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow(['title', 'paragraph'])
 
     def write_file(self, title, para):
-        with open('raw_data.csv', mode='a') as raw_data:
+        with open('./data_cleaning/raw_data.csv', mode='a') as raw_data:
             writer = csv.writer(raw_data, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             writer.writerow([title, para])
 
