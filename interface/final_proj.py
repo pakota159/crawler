@@ -10,20 +10,35 @@ import pandas as pd
 import numpy as np
 import re
 import os
+import sys
 
-print(os. getcwd())
-data = pd.read_csv('./data_cleaning/output.csv')
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
+output_file = resource_path('data_cleaning/output.csv')
+background_img = resource_path('interface/background.png')
+search_img = resource_path('interface/search.png')
+speaker_img = resource_path('interface/speaker.png')
+
+data = pd.read_csv(output_file)
 word_search = "Word"
 word_mean = "Definition of word"
 word_example ="Show a example of your word"
 
-#Form code
+# Form code
 root = Tk()
+
 def speaker_word():
 	engine = pyttsx3.init()
 	engine.say(my_input.get())
 	engine.runAndWait()
+
 def speaker_sen():
 	x = my_input.get()
 	y = data.loc[lambda data: data['paragraph_arr'] == x.upper(),["sentence"][0]].iloc[0]
@@ -44,7 +59,7 @@ def add_meaning():
             'rating': 4
         }, index=[0]
     )
-    with open('./data_cleaning/output.csv', 'a') as f:
+    with open(output_file, 'a') as f:
         df.to_csv(f, mode='a', header=False, index=False)
 
 my_mean = tk.StringVar()
@@ -80,7 +95,7 @@ root.geometry("600x400")
 	#root.iconbitmap("D:/02.Project/Edu/Dic/icon.ico")
 	#root.tk.call('wm', 'iconphoto', root._w, tk.PhotoImage(file='D:/02.Project/Edu/Dic/icon.png'))
 
-bg= ImageTk.PhotoImage(file='./interface/background.png')
+bg= ImageTk.PhotoImage(file=background_img)
 canvas = Canvas(root,width=600, height = 400)
 canvas.pack(expand=True, fill = BOTH)
 canvas.create_image(0,0,image = bg, anchor = "nw")
@@ -136,15 +151,25 @@ def getTextInput():
 	    lb_mean.config(text = format(my_wrap.fill(text = word_mean)))
 	    word_example = data.loc[lambda data: data['paragraph_arr'] == word_search,["sentence"][0]].iloc[0]
 	    lb_example.config(text = format(my_wrap.fill(text = word_example)))
-	    Label(root, text= 'Popular rating:   '+ str(data.loc[lambda data: data['paragraph_arr'] == word_search,["rating"][0]].iloc[0])+'/4', fg='red', font=("Helvetica", 11)).place(x=10, y=370)
-image_search = PhotoImage(file = "./interface/search.png")
+	    rating = ''
+	    if str(data.loc[lambda data: data['paragraph_arr'] == word_search,["rating"][0]].iloc[0]) == '1':
+	    	rating = "Very Important"
+	    elif str(data.loc[lambda data: data['paragraph_arr'] == word_search,["rating"][0]].iloc[0]) == '2':
+	    	rating ='Important'
+	    elif str(data.loc[lambda data: data['paragraph_arr'] == word_search,["rating"][0]].iloc[0]) == '3':
+	    	rating = 'Normal'
+	    else :
+	    	rating = 'Rare'
+	    Label(root, text= 'Popular rating:   '+ rating, fg='red', font=("Helvetica", 11)).place(x=10, y=370)
+
+image_search = PhotoImage(file = search_img)
 btn_search = Button(root, image = image_search,command = getTextInput)
 btn1 = canvas.create_window(500, 18, anchor="nw", window = btn_search)
 #_____
 btn_add = Button(root, text = "Add meaning",fg='red', font=("Helvetica", 10,'bold'),command=addmeaning)
 btn2 = canvas.create_window(480, 350, anchor="nw", window = btn_add)
 
-image_speaker = PhotoImage(file = "./interface/speaker.png")
+image_speaker = PhotoImage(file = speaker_img)
 btn_speakword = Button(root, image = image_speaker, command = speaker_word)
 btn3 = canvas.create_window(480, 65, anchor="nw", window = btn_speakword)
 

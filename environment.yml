@@ -1,0 +1,12 @@
+name: crawler
+dependencies:
+  - numpy
+  - pandas
+  - scrapy
+  - tk
+  - pip
+  - pywin32
+  - textwrap3
+  - pip:
+    - pyttsx3
+    - pillow
