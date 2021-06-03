@@ -1,3 +1,7 @@
+import os
+import sys
+import threading
+
 from tkinter import *
 from tkinter import filedialog
 from tkinter import font
@@ -8,9 +12,6 @@ import textwrap
 import pyttsx3
 import pandas as pd
 import numpy as np
-import re
-import os
-import sys
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -21,11 +22,13 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+# External files
 output_file = resource_path('data_cleaning/output.csv')
 background_img = resource_path('interface/background.png')
 search_img = resource_path('interface/search.png')
 speaker_img = resource_path('interface/speaker.png')
 
+# Raw data
 data = pd.read_csv(output_file)
 word_search = "Word"
 word_mean = "Definition of word"
@@ -34,36 +37,52 @@ word_example ="Show a example of your word"
 # Form code
 root = Tk()
 
-def speaker_word():
+root.title('Data Science - Dictionary')
+root.geometry("600x400")
+
+# Background
+bg= ImageTk.PhotoImage(file=background_img)
+canvas = Canvas(root,width=600, height = 400)
+canvas.pack(expand=True, fill = BOTH)
+canvas.create_image(0,0,image = bg, anchor = "nw")
+
+canvas.create_text(50,35,text="Eng - Vie",font=('helvetica', 15, 'bold'))
+
+# textbox input word
+my_input = tk.StringVar()
+input_Entered = ttk.Entry(root, width = 30,font=('helvetica', 15, 'italic'), textvariable = my_input )
+input_Entered.place(x=120, y=20)
+
+def speaker_word(input_text):
 	engine = pyttsx3.init()
-	engine.say(my_input.get())
+	engine.say(input_text)
 	engine.runAndWait()
 
 def speaker_sen():
-	x = my_input.get()
-	y = data.loc[lambda data: data['paragraph_arr'] == x.upper(),["sentence"][0]].iloc[0]
-	engine = pyttsx3.init()
-	engine.say(y)
-	engine.runAndWait()
+	sentence = data.loc[lambda data: data['paragraph_arr'] == my_input.get().upper(),["sentence"][0]].iloc[0]
+	speaker_word(sentence)
+	
+def add_meaning_to_file():
+	df = pd.DataFrame(
+		{
+			'paragraph_arr': my_input.get(),
+			'freq': 1000,
+			'title': 100,
+			'rank': 3000,
+			'meaning': my_mean.get(),
+			'example': my_input.get(),
+			'sentence': my_input.get(),
+			'rating': 1
+		}, index=[0]
+	)
+
+	data.loc[data.index.max() + 1] = [my_input.get(), 1000, 100, 3000, my_mean.get(), my_input.get(), my_input.get(), 1]
+	with open(output_file, 'a') as f:
+		df.to_csv(f, mode='a', header=False, index=False)
+		
+my_mean = tk.StringVar()
 
 def add_meaning():
-    df = pd.DataFrame(
-        {
-            'paragraph_arr': my_input.get(),
-            'freq': 1000,
-            'title': 100,
-            'rank': 3000,
-            'meaning': my_mean.get(),
-            'example': my_input.get(),
-            'sentence': my_input.get(),
-            'rating': 4
-        }, index=[0]
-    )
-    with open(output_file, 'a') as f:
-        df.to_csv(f, mode='a', header=False, index=False)
-
-my_mean = tk.StringVar()
-def addmeaning():
 	sub_form = Toplevel(root)
 	sub_form.geometry("400x250")
 	sub_form.title("Add new word's meaning!")
@@ -76,65 +95,19 @@ def addmeaning():
 	lb_submean.place(x=10, y=65)
 	lb_done = Label(sub_form, text= "  ", fg='red', font=("Helvetica", 13,)).place(x=100, y=200)
 
-	btnadd = Button(sub_form, text = '   Add   ', bd = '5',command = add_meaning)
+	btnadd = Button(sub_form, text = '   Add   ', bd = '5',command = add_meaning_to_file)
 	btnadd.place(x = 330, y = 105)
 
 	btnsub = Button(sub_form, text = '   OK!   ', bd = '5',command = sub_form.destroy)
 	btnsub.place(x = 330, y = 200)
 
-	#my_mean = tk.StringVar()
 	input_mean = ttk.Entry(sub_form, width = 30,font=('helvetica', 13, 'italic'), textvariable = my_mean )
 	input_mean.place(x=10, y=105)
 
-	#btn_subadd = Button(sub_form, text = "OK",fg='red', font=("Helvetica", 10,'bold'))
-	#btnsub = canvas.create_window(300, 200, anchor="nw", window = btn_subadd)
 	sub_form.resizable(0, 0)
 	sub_form.mainloop()
-root.title('Data Science - Dictionary')
-root.geometry("600x400")
-	#root.iconbitmap("D:/02.Project/Edu/Dic/icon.ico")
-	#root.tk.call('wm', 'iconphoto', root._w, tk.PhotoImage(file='D:/02.Project/Edu/Dic/icon.png'))
 
-bg= ImageTk.PhotoImage(file=background_img)
-canvas = Canvas(root,width=600, height = 400)
-canvas.pack(expand=True, fill = BOTH)
-canvas.create_image(0,0,image = bg, anchor = "nw")
 
-my_form = Frame(root)
-my_form.pack(pady=5)
-
-my_menu = Menu(root)
-root.config(menu = my_menu)
-
-file_menu = Menu(my_menu, tearoff=False)
-my_menu.add_cascade(label ="Dictionary",menu=file_menu)
-file_menu.add_command(label="Eng - Vie")
-file_menu.add_command(label="Vie - Eng")
-file_menu.add_separator()
-file_menu.add_command(label="China - Vie")
-file_menu.add_command(label="Viet - China")
-file_menu.add_separator()
-file_menu.add_command(label="Exit", command = root.destroy)
-
-edit_menu = Menu(my_menu, tearoff=False)
-my_menu.add_cascade(label ="Information",menu=edit_menu)
-edit_menu.add_command(label="Arthur")
-edit_menu.add_command(label="Lisence")
-edit_menu.add_command(label="Reference")
-edit_menu.add_command(label="Webside")
-
-Help_menu = Menu(my_menu, tearoff=False)
-my_menu.add_cascade(label ="Help",menu=Help_menu)
-Help_menu.add_command(label="Feed back!")
-Help_menu.add_command(label="Contact")
-Help_menu.add_command(label="Help")
-
-canvas.create_text(50,35,text="Eng - Vie",font=('helvetica', 15, 'bold'))
-
-#textbox input word
-my_input = tk.StringVar()
-input_Entered = ttk.Entry(root, width = 30,font=('helvetica', 15, 'italic'), textvariable = my_input )
-input_Entered.place(x=120, y=20)
 
 def getTextInput():
     word_search = my_input.get()
@@ -162,21 +135,19 @@ def getTextInput():
 	    	rating = 'Rare'
 	    Label(root, text= 'Popular rating:   '+ rating, fg='red', font=("Helvetica", 11)).place(x=10, y=370)
 
+# Search button
 image_search = PhotoImage(file = search_img)
 btn_search = Button(root, image = image_search,command = getTextInput)
-btn1 = canvas.create_window(500, 18, anchor="nw", window = btn_search)
-#_____
-btn_add = Button(root, text = "Add meaning",fg='red', font=("Helvetica", 10,'bold'),command=addmeaning)
-btn2 = canvas.create_window(480, 350, anchor="nw", window = btn_add)
+canvas.create_window(500, 18, anchor="nw", window = btn_search)
 
+# Add meaning button
+btn_add = Button(root, text = "Add meaning",fg='red', font=("Helvetica", 10,'bold'),command=add_meaning)
+canvas.create_window(480, 350, anchor="nw", window = btn_add)
+
+# Speaker button
 image_speaker = PhotoImage(file = speaker_img)
-btn_speakword = Button(root, image = image_speaker, command = speaker_word)
-btn3 = canvas.create_window(480, 65, anchor="nw", window = btn_speakword)
-
-#btn4 = canvas.create_window(480, 225, anchor="nw", window = btn_speaksen)
-#output
-#lb_word=Label(root, text= "["+word_search+']', fg='red', font=("Helvetica", 15, 'bold'))
-#lb_word.place(x=10, y=65)
+btn_speakword = Button(root, image = image_speaker, command = lambda: threading.Thread(target=speaker_word, daemon=True).start())
+canvas.create_window(480, 65, anchor="nw", window = btn_speakword)
 
 lb_dinhnghia=Label(root, text="* Definition:", fg='blue', font=("Helvetica", 13))
 lb_dinhnghia.place(x=10, y=100)
@@ -188,12 +159,12 @@ lb_vidu=Label(root, text="* Example:", fg='blue', font=("Helvetica", 13))
 lb_vidu.place(x=10, y=200)
 
 my_wrap = textwrap.TextWrapper(width = 60)
-#word_example =format(my_wrap.fill(text = word_example))
 
 lb_example = Label(root, text = format(my_wrap.fill(text = word_example)), fg='black', font=("Helvetica", 11),anchor = "w",justify=LEFT)
 lb_example.place(x=50, y=225)
 
 status_bar = Label(root,text="Ready   ", anchor=E)
 status_bar.pack(fill=X,side= BOTTOM, ipady = 5)
+
 root.resizable(0,0)
 root.mainloop()
