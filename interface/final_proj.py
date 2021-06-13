@@ -53,6 +53,8 @@ my_input = tk.StringVar()
 input_Entered = ttk.Entry(root, width = 30,font=('helvetica', 15, 'italic'), textvariable = my_input )
 input_Entered.place(x=120, y=20)
 
+my_mean = tk.StringVar()
+
 def speaker_word(input_text):
 	engine = pyttsx3.init()
 	engine.say(input_text)
@@ -75,12 +77,10 @@ def add_meaning_to_file():
 			'rating': 1
 		}, index=[0]
 	)
-
-	data.loc[data.index.max() + 1] = [my_input.get(), 1000, 100, 3000, my_mean.get(), my_input.get(), my_input.get(), 1]
+	global data
+	data.loc[data.index.max() + 1] = [my_input.get().upper(), 1000, 100, 3000, my_mean.get(), my_input.get(), "", 1]
 	with open(output_file, 'a') as f:
 		df.to_csv(f, mode='a', header=False, index=False)
-		
-my_mean = tk.StringVar()
 
 def add_meaning():
 	sub_form = Toplevel(root)
@@ -107,33 +107,44 @@ def add_meaning():
 	sub_form.resizable(0, 0)
 	sub_form.mainloop()
 
+suggestion_word = StringVar()
+rating = StringVar()
 
+def get_random_suggestion():
+	arr = data[data['rating'] <= 3].sample(n=3)['paragraph_arr'].tolist()
+	s = ", ".join(arr).lower()
+	return s
+
+suggestion_word.set(get_random_suggestion())
 
 def getTextInput():
-    word_search = my_input.get()
-    word_search = word_search.upper()
-    if word_search not in data['paragraph_arr'].unique():
-    	#print('False')
-    	lb_mean.config(text = 'Not found this word in database. You can add into database!')
-    	lb_example.config(text = ' ')
-    	Label(root, text= 'Popular rating:   0/4', fg='red', font=("Helvetica", 11)).place(x=10, y=370)
-    if word_search in data['paragraph_arr'].unique():
+	word_search = my_input.get()
+	word_search = word_search.upper()
+	global suggestion_word
+	suggestion_word.set(get_random_suggestion())
+
+	if word_search not in data['paragraph_arr'].unique():
+		#print('False')
+		lb_mean.config(text = 'Not found this word in database. You can add into database!')
+		lb_example.config(text = ' ')
+		Label(root, text= 'Popular rating:   0/4', fg='red', font=("Helvetica", 11)).place(x=10, y=370)
+	if word_search in data['paragraph_arr'].unique():
 	    Label(root, text= "["+word_search+']                          ', fg='red', font=("Helvetica", 15, 'bold')).place(x=10, y=65)
 	    my_wrap = textwrap.TextWrapper(width = 60)
 	    word_mean = data.loc[lambda data: data['paragraph_arr'] == word_search,["meaning"][0]].iloc[0]
 	    lb_mean.config(text = format(my_wrap.fill(text = word_mean)))
 	    word_example = data.loc[lambda data: data['paragraph_arr'] == word_search,["sentence"][0]].iloc[0]
 	    lb_example.config(text = format(my_wrap.fill(text = word_example)))
-	    rating = ''
+	    global rating
 	    if str(data.loc[lambda data: data['paragraph_arr'] == word_search,["rating"][0]].iloc[0]) == '1':
-	    	rating = "Very Important"
+	    	rating.set('Popular rating: Very Important')
 	    elif str(data.loc[lambda data: data['paragraph_arr'] == word_search,["rating"][0]].iloc[0]) == '2':
-	    	rating ='Important'
+	    	rating.set('Popular rating: Important')
 	    elif str(data.loc[lambda data: data['paragraph_arr'] == word_search,["rating"][0]].iloc[0]) == '3':
-	    	rating = 'Normal'
+	    	rating.set('Popular rating: Normal')
 	    else :
-	    	rating = 'Rare'
-	    Label(root, text= 'Popular rating:   '+ rating, fg='red', font=("Helvetica", 11)).place(x=10, y=370)
+	    	rating.set('Popular rating: Rare')
+	    Label(root, textvariable= rating, fg='red', font=("Helvetica", 11)).place(x=10, y=370)
 
 # Search button
 image_search = PhotoImage(file = search_img)
@@ -149,12 +160,14 @@ image_speaker = PhotoImage(file = speaker_img)
 btn_speakword = Button(root, image = image_speaker, command = lambda: threading.Thread(target=speaker_word, daemon=True).start())
 canvas.create_window(480, 65, anchor="nw", window = btn_speakword)
 
+# definition
 lb_dinhnghia=Label(root, text="* Definition:", fg='blue', font=("Helvetica", 13))
 lb_dinhnghia.place(x=10, y=100)
 
 lb_mean=Label(root, text= word_mean, fg='black', font=("Helvetica", 11),anchor = "w",justify=LEFT)
 lb_mean.place(x=50, y=125)
 
+# Example
 lb_vidu=Label(root, text="* Example:", fg='blue', font=("Helvetica", 13))
 lb_vidu.place(x=10, y=200)
 
@@ -163,8 +176,12 @@ my_wrap = textwrap.TextWrapper(width = 60)
 lb_example = Label(root, text = format(my_wrap.fill(text = word_example)), fg='black', font=("Helvetica", 11),anchor = "w",justify=LEFT)
 lb_example.place(x=50, y=225)
 
-status_bar = Label(root,text="Ready   ", anchor=E)
-status_bar.pack(fill=X,side= BOTTOM, ipady = 5)
+# Suggestion
+suggestion_label = Label(root, text="* Suggestions:", fg='blue', font=("Helvetica", 13))
+suggestion_label.place(x=10, y=300)
+
+suggestions = Label(root, textvariable = suggestion_word, fg='black', font=("Helvetica", 13),anchor = "w",justify=LEFT)
+suggestions.place(x=110, y=300)
 
 root.resizable(0,0)
 root.mainloop()
