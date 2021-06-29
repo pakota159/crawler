@@ -70,24 +70,34 @@ class LinkSpider(scrapy.Spider):
 
     def start_requests(self):
         urls = [
-            'https://www.kdnuggets.com/tag/data-science',
-            'https://www.kdnuggets.com/tag/data-science/page/2',
-            'https://www.kdnuggets.com/tag/data-science/page/3',
-            'https://www.kdnuggets.com/tag/data-science/page/4',
-            'https://www.kdnuggets.com/tag/data-science/page/5',
-            'https://www.kdnuggets.com/tag/data-science/page/6',
-            'https://www.kdnuggets.com/tag/data-science/page/7',
-            'https://www.kdnuggets.com/tag/data-science/page/8',
-            'https://www.kdnuggets.com/tag/data-science/page/9',
+            # 'https://www.kdnuggets.com/tag/data-science',
+            # 'https://www.kdnuggets.com/tag/data-science/page/2',
+            # 'https://www.kdnuggets.com/tag/data-science/page/3',
+            # 'https://www.kdnuggets.com/tag/data-science/page/4',
+            # 'https://www.kdnuggets.com/tag/data-science/page/5',
+            # 'https://www.kdnuggets.com/tag/data-science/page/6',
+            # 'https://www.kdnuggets.com/tag/data-science/page/7',
+            # 'https://www.kdnuggets.com/tag/data-science/page/8',
+            # 'https://www.kdnuggets.com/tag/data-science/page/9',
         ]
+
+        for i in range(1,20):
+            urls.append('https://simplystatistics.org/page/{}/'.format(i))
 
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
 
     def parse(self, response):
         # Get all paragraphs
-        for li in response.css("ul.three_ul li"):
-            a_tag = li.css("a::attr(href)").get()
-            if bool(re.search(r"\/20[0-9]{2}\/[0-9]{2}\/", a_tag)):
-                with open('links.txt', 'a') as the_file:
-                    the_file.write(a_tag + "\n")
+        if 'simplystatistics' in response.url:
+            for article in response.css("article"):
+                raw_link = article.css("header h2 a::attr(href)").get()
+                link = 'https://simplystatistics.org' + raw_link[raw_link.index('./20')+1:]
+                if 'episode' not in link:
+                    print(link)
+
+        # for li in response.css("ul.three_ul li"):
+        #     a_tag = li.css("a::attr(href)").get()
+        #     if bool(re.search(r"\/20[0-9]{2}\/[0-9]{2}\/", a_tag)):
+        #         with open('links.txt', 'a') as the_file:
+        #             the_file.write(a_tag + "\n")
